@@ -1,0 +1,224 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Qdrant Collection Proxy",
+    "version": "1.0.0",
+    "description": "JWT-protected read-only proxy exposing a single Qdrant collection. Only the collection configured on the server is accessible; other collections are masked or forbidden."
+  },
+  "servers": [
+    { "url": "http://localhost:8787" }
+  ],
+  "security": [
+    { "bearerAuth": [] },
+    { "apiKeyAuth": [] }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Health check",
+        "description": "Returns basic status. No authentication required.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": { "type": "boolean" },
+                    "collection": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/collections": {
+      "get": {
+        "summary": "List collections (masked)",
+        "description": "Returns a list with only the single exposed collection.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QdrantResponse"
+                },
+                "examples": {
+                  "masked": {
+                    "value": {
+                      "status": "ok",
+                      "result": { "collections": [ { "name": "<collection>" } ] }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/collections/{name}": {
+      "parameters": [
+        { "name": "name", "in": "path", "required": true, "schema": { "type": "string" }, "description": "Must equal the server-configured collection name." }
+      ],
+      "get": {
+        "summary": "Get collection details",
+        "responses": {
+          "200": {
+            "description": "Details",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/QdrantResponse" } } }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      },
+      "head": {
+        "summary": "Check collection existence (proxy-local)",
+        "responses": {
+          "200": { "description": "Exists" },
+          "404": { "description": "Not found" }
+        }
+      }
+    },
+    "/collections/{name}/payload_schema": {
+      "get": {
+        "summary": "Get payload schema",
+        "parameters": [
+          { "name": "name", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "$ref": "#/components/responses/QdrantOk" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/collections/{name}/points/search": {
+      "post": {
+        "summary": "Vector search",
+        "requestBody": { "$ref": "#/components/requestBodies/GenericJson" },
+        "responses": {
+          "200": { "$ref": "#/components/responses/QdrantOk" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/collections/{name}/points/search/batch": {
+      "post": { "summary": "Batch vector search", "requestBody": { "$ref": "#/components/requestBodies/GenericJson" }, "responses": { "200": { "$ref": "#/components/responses/QdrantOk" }, "401": { "$ref": "#/components/responses/Unauthorized" }, "403": { "$ref": "#/components/responses/Forbidden" } } }
+    },
+    "/collections/{name}/points/search/groups": {
+      "post": { "summary": "Grouped vector search", "requestBody": { "$ref": "#/components/requestBodies/GenericJson" }, "responses": { "200": { "$ref": "#/components/responses/QdrantOk" }, "401": { "$ref": "#/components/responses/Unauthorized" }, "403": { "$ref": "#/components/responses/Forbidden" } } }
+    },
+    "/collections/{name}/points/recommend": {
+      "post": { "summary": "Recommend", "requestBody": { "$ref": "#/components/requestBodies/GenericJson" }, "responses": { "200": { "$ref": "#/components/responses/QdrantOk" }, "401": { "$ref": "#/components/responses/Unauthorized" }, "403": { "$ref": "#/components/responses/Forbidden" } } }
+    },
+    "/collections/{name}/points/recommend/batch": {
+      "post": { "summary": "Batch recommend", "requestBody": { "$ref": "#/components/requestBodies/GenericJson" }, "responses": { "200": { "$ref": "#/components/responses/QdrantOk" }, "401": { "$ref": "#/components/responses/Unauthorized" }, "403": { "$ref": "#/components/responses/Forbidden" } } }
+    },
+    "/collections/{name}/points/query": {
+      "post": { "summary": "Unified query", "requestBody": { "$ref": "#/components/requestBodies/GenericJson" }, "responses": { "200": { "$ref": "#/components/responses/QdrantOk" }, "401": { "$ref": "#/components/responses/Unauthorized" }, "403": { "$ref": "#/components/responses/Forbidden" } } }
+    },
+    "/collections/{name}/points/query/batch": {
+      "post": { "summary": "Batch unified query", "requestBody": { "$ref": "#/components/requestBodies/GenericJson" }, "responses": { "200": { "$ref": "#/components/responses/QdrantOk" }, "401": { "$ref": "#/components/responses/Unauthorized" }, "403": { "$ref": "#/components/responses/Forbidden" } } }
+    },
+    "/collections/{name}/points/scroll": {
+      "post": { "summary": "Scroll points", "requestBody": { "$ref": "#/components/requestBodies/GenericJson" }, "responses": { "200": { "$ref": "#/components/responses/QdrantOk" }, "401": { "$ref": "#/components/responses/Unauthorized" }, "403": { "$ref": "#/components/responses/Forbidden" } } }
+    },
+    "/collections/{name}/points/retrieve": {
+      "post": {
+        "summary": "Retrieve by ids",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "ids": { "type": "array", "items": { "oneOf": [ { "type": "string" }, { "type": "integer" } ] } },
+                  "with_payload": { "type": "boolean" },
+                  "with_vector": { "type": "boolean" }
+                },
+                "required": ["ids"],
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "responses": { "200": { "$ref": "#/components/responses/QdrantOk" }, "401": { "$ref": "#/components/responses/Unauthorized" }, "403": { "$ref": "#/components/responses/Forbidden" } }
+      }
+    },
+    "/collections/{name}/points/{id}": {
+      "parameters": [
+        { "name": "name", "in": "path", "required": true, "schema": { "type": "string" } },
+        { "name": "id", "in": "path", "required": true, "schema": { "oneOf": [ { "type": "string" }, { "type": "integer" } ] } }
+      ],
+      "get": { "summary": "Retrieve by id", "responses": { "200": { "$ref": "#/components/responses/QdrantOk" }, "401": { "$ref": "#/components/responses/Unauthorized" }, "403": { "$ref": "#/components/responses/Forbidden" } } }
+    },
+    "/collections/{name}/points/count": {
+      "post": { "summary": "Count points", "requestBody": { "$ref": "#/components/requestBodies/GenericJson" }, "responses": { "200": { "$ref": "#/components/responses/QdrantOk" }, "401": { "$ref": "#/components/responses/Unauthorized" }, "403": { "$ref": "#/components/responses/Forbidden" } } }
+    },
+    "/collections/{name}/points": {
+      "post": {
+        "summary": "Compatibility: retrieve via POST /points (ids only)",
+        "description": "Allows only retrieve-like payloads with ids; any write-like payloads are rejected with 403.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "ids": { "type": "array", "items": { "oneOf": [ { "type": "string" }, { "type": "integer" } ] } }
+                },
+                "required": ["ids"],
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "responses": { "200": { "$ref": "#/components/responses/QdrantOk" }, "401": { "$ref": "#/components/responses/Unauthorized" }, "403": { "$ref": "#/components/responses/Forbidden" } }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" },
+      "apiKeyAuth": { "type": "apiKey", "in": "header", "name": "api-key", "description": "Alternative to Authorization: Bearer; send the JWT here for SDK compatibility." }
+    },
+    "responses": {
+      "Unauthorized": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+      "Forbidden": { "description": "Forbidden", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } },
+      "QdrantOk": { "description": "Qdrant response", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/QdrantResponse" } } } }
+    },
+    "requestBodies": {
+      "GenericJson": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": { "type": "object", "additionalProperties": true }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "ErrorResponse": { "type": "object", "properties": { "error": { "type": "string" } }, "required": ["error"] },
+      "QdrantResponse": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string" },
+          "time": { "type": "number" },
+          "result": { "type": "object", "additionalProperties": true },
+          "usage": { "type": "object", "additionalProperties": true }
+        },
+        "additionalProperties": true
+      }
+    }
+  }
+}
