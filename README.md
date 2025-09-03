@@ -71,3 +71,4 @@ Validation uses `issuer` and `secret`. Rotation can be handled by changing `JWT_
 - The collection name in path must match the configured one; otherwise 403.
 - If your upstream Qdrant uses self-signed TLS, set `QDRANT_INSECURE_TLS=true`.
  - IP Whitelist: Set `PROXY_IP_WHITELIST` like `127.0.0.1/32,::1/128,10.0.0.0/8`. Requests from these IPs skip JWT validation. If behind a proxy, enable `TRUST_PROXY=true` and ensure correct X-Forwarded-For handling.
+ - RapidAPI bypass: If the header `X-RapidAPI-User` is present, the request is auto-whitelisted (JWT not required). The user context is set to `rapidapi:<value>`.

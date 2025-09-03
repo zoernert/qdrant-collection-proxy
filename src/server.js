@@ -115,6 +115,13 @@ function getClientIp(req) {
 // JWT auth middleware
 function authMiddleware(req, res, next) {
   try {
+    // Auto-whitelist RapidAPI calls: if X-RapidAPI-User header exists, skip JWT
+    const rapidUser = req.headers['x-rapidapi-user'];
+    if (rapidUser && rapidUser.toString().length > 0) {
+      req.user = { sub: `rapidapi:${rapidUser}`, scope: 'read', bypass: 'rapidapi' };
+      return next();
+    }
+
     const clientIp = getClientIp(req);
     if (isWhitelistedIp(clientIp)) {
       req.user = { sub: 'whitelist', scope: 'read', ip: clientIp };
